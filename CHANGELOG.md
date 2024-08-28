@@ -1,5 +1,23 @@
 # MatchZy Changelog
 
+# 0.8.5
+
+#### August 27, 2024
+
+- Added `matchzy_match_start_message` convar to configure message to show when the match starts. Use $$$ to break message into multiple lines.
+- Some improvements and guard checks in coach system
+- Fixed `matchzy_hostname_format` not getting disabled on setting its value to ""
+- Fixed winner side in `round_end` event
+
+# 0.8.4
+
+#### August 27, 2024
+
+- Fixes in coach system, where players would spawn into each other.
+- Improved backup loading (teams will be locked automatically with the first restore if match setup was being used.)
+- Fixed veto bug where ready system would not work after the veto.
+- Updated Uzbek translations 
+
 # 0.8.3
 
 #### August 25, 2024

@@ -227,6 +227,7 @@ namespace MatchZy
             }
 
             // Setting match phases bools
+            matchStarted = true;
             isKnifeRound = true;
             readyAvailable = false;
             isWarmup = false;
@@ -426,12 +427,15 @@ namespace MatchZy
 
                 foreach (var coach in coaches)
                 {
+                    if (!IsPlayerValid(coach)) continue;
                     coach.Clan = "";
                     SetPlayerVisible(coach);
                 }
 
                 matchzyTeam1.coach = new();
                 matchzyTeam2.coach = new();
+                coachKillTimer?.Kill();
+                coachKillTimer = null;
 
                 matchzyTeam1.seriesScore = 0;
                 matchzyTeam2.seriesScore = 0;
@@ -693,7 +697,6 @@ namespace MatchZy
         {
             isPractice = false;
             isDryRun = false;
-            matchStarted = true;
             if (isRoundRestorePending)
             {
                 RestoreRoundBackup(null, pendingRestoreFileName);
@@ -767,6 +770,14 @@ namespace MatchZy
             if (showCreditsOnMatchStart.Value)
             {
                 Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}MatchZy{ChatColors.Default} Plugin by {ChatColors.Green}WD-{ChatColors.Default}");
+            }
+            if (matchStartMessage.Value.Trim() != "" && matchStartMessage.Value.Trim() != "\"\"")
+            {
+                List<string> matchStartMessages = [.. matchStartMessage.Value.Split("$$$")];
+                foreach (string message in matchStartMessages)
+                {
+                    PrintToAllChat(GetColorTreatedString(FormatCvarValue(message.Trim())));
+                }
             }
         }
 
@@ -1013,6 +1024,8 @@ namespace MatchZy
             {
                 if (isMatchLive)
                 {
+                    coachKillTimer?.Kill();
+                    coachKillTimer = null;
                     (int t1score, int t2score) = GetTeamsScore();
                     Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam1.teamName} [{t1score} - {t2score}] {matchzyTeam2.teamName}");
 
@@ -1024,7 +1037,7 @@ namespace MatchZy
                     long matchId = liveMatchId;
                     int ctTeamNum = reverseTeamSides["CT"] == matchzyTeam1 ? 1 : 2;
                     int tTeamNum = reverseTeamSides["TERRORIST"] == matchzyTeam1 ? 1 : 2;
-                    Winner winner = new(@event.Winner == 3 ? ctTeamNum.ToString() : tTeamNum.ToString(), t1score > t2score ? "team1" : "team2");
+                    Winner winner = new(@event.Winner.ToString(), t1score > t2score ? "team1" : "team2");
 
                     var roundEndEvent = new MatchZyRoundEndedEvent
                     {
@@ -1260,6 +1273,9 @@ namespace MatchZy
 
         private void SetMatchPausedFlags()
         {
+            coachKillTimer?.Kill();
+            coachKillTimer = null;
+
             Server.ExecuteCommand("mp_pause_match;");
             isPaused = true;
 
@@ -1518,8 +1534,9 @@ namespace MatchZy
 
         public void UpdateHostname()
         {
-            if (hostnameFormat.Value.Trim() == "") return;
-            string formattedHostname = FormatCvarValue(hostnameFormat.Value);
+            string hostname = hostnameFormat.Value.Trim();
+            if (hostname == "" || hostname == "\"\"") return;
+            string formattedHostname = FormatCvarValue(hostname);
             Log($"UPDATING HOSTNAME TO: {formattedHostname}");
             Server.ExecuteCommand($"hostname {formattedHostname}");
         }
